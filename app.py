@@ -8,7 +8,7 @@ DOWNLOAD_DIR = "/tmp"
 
 @app.route("/", methods=["GET", "POST"])
 def index():
-    if request.method == "POST":
+if request.method == "POST":
 from urllib.parse import urlparse, parse_qs
 
 raw_url = request.form["url"]
