@@ -1,8 +1,7 @@
 from flask import Flask, request, render_template, send_file
-from pytube import YouTube
 import os
 import uuid
-import subprocess
+import yt_dlp
 
 app = Flask(__name__)
 DOWNLOAD_DIR = "/tmp"
@@ -11,24 +10,27 @@ DOWNLOAD_DIR = "/tmp"
 def index():
     if request.method == "POST":
         url = request.form["url"]
-        yt = YouTube(url)
-        audio_stream = yt.streams.filter(only_audio=True).first()
         temp_id = uuid.uuid4().hex
-        mp4_path = os.path.join(DOWNLOAD_DIR, f"{temp_id}.mp4")
-        mp3_path = os.path.join(DOWNLOAD_DIR, f"{temp_id}.mp3")
+        mp3_path = os.path.join(DOWNLOAD_DIR, f"{temp_id}.%(ext)s")
 
-        audio_stream.download(filename=mp4_path)
+        ydl_opts = {
+            'format': 'bestaudio/best',
+            'outtmpl': mp3_path,
+            'postprocessors': [{
+                'key': 'FFmpegExtractAudio',
+                'preferredcodec': 'mp3',
+                'preferredquality': '192',
+            }],
+        }
 
-        subprocess.run(["ffmpeg", "-i", mp4_path, "-vn", "-ab", "192k", "-ar", "44100", "-y", mp3_path])
+        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+            ydl.download([url])
 
-        os.remove(mp4_path)
-
-        return send_file(mp3_path, as_attachment=True, download_name=f"{yt.title}.mp3")
+        final_mp3 = os.path.join(DOWNLOAD_DIR, f"{temp_id}.mp3")
+        return send_file(final_mp3, as_attachment=True, download_name="audio.mp3")
 
     return render_template("index.html")
 
-
 if __name__ == "__main__":
-    import os
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
