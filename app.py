@@ -9,7 +9,13 @@ DOWNLOAD_DIR = "/tmp"
 @app.route("/", methods=["GET", "POST"])
 def index():
     if request.method == "POST":
-        url = request.form["url"]
+from urllib.parse import urlparse, parse_qs
+
+raw_url = request.form["url"]
+parsed = urlparse(raw_url)
+query = parse_qs(parsed.query)
+video_id = query.get("v", [None])[0]
+url = f"https://www.youtube.com/watch?v={video_id}" if video_id else raw_url
         temp_id = uuid.uuid4().hex
         mp3_path = os.path.join(DOWNLOAD_DIR, f"{temp_id}.%(ext)s")
 
