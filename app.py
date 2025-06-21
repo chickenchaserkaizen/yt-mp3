@@ -26,3 +26,9 @@ def index():
         return send_file(mp3_path, as_attachment=True, download_name=f"{yt.title}.mp3")
 
     return render_template("index.html")
+
+
+if __name__ == "__main__":
+    import os
+    port = int(os.environ.get("PORT", 5000))
+    app.run(host="0.0.0.0", port=port)
